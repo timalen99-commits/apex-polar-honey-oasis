@@ -23,6 +23,8 @@ import {
   Sparkles,
   TrendingUp,
   TriangleAlert,
+  Trophy,
+  Wallet,
   X,
 } from "lucide-react";
 import {
@@ -31,8 +33,12 @@ import {
   type CampaignOpportunity,
   type YieldPool,
 } from "@/lib/crypto/scanner";
+import { PROMPT_PACK } from "@/lib/crypto/playbook";
+import { EarningsTracker } from "@/components/earnings-tracker";
+import { PlaybookView } from "@/components/playbook-view";
 
-type View = "overview" | "airdrops" | "giveaways" | "liquidity" | "saved" | "agent";
+type View =
+  "overview" | "airdrops" | "giveaways" | "liquidity" | "playbook" | "earnings" | "saved" | "agent";
 type YieldState = "loading" | "ready" | "error";
 type Opportunity =
   | { kind: "campaign"; key: string; item: CampaignOpportunity }
@@ -48,22 +54,15 @@ type SavedState = {
 const STORAGE_KEY = "chainscout.workspace.v1";
 const REFRESH_INTERVAL_MS = 90_000;
 
-const AGENT_PROMPT = `You are my cautious, research-only crypto opportunity scout. Run this check once per day at 08:00 UTC, and never take actions for me.
-
-1. Search public, dated sources from the last 24 hours for active airdrops, retroactive reward programs, and no-purchase crypto giveaways. Prioritize announcements on a project's official site or an account linked from that site. Include the original source URL and its publish date for every item. If authenticity or current status is unclear, label it UNCONFIRMED or omit it. If nothing qualifies, say so plainly; never invent opportunities, rewards, dates, eligibility, or links.
-2. Check public DeFi yield data (for example, DeFiLlama) and report a small set of pools with protocol, chain, pair, current TVL, current APY, base-versus-reward APY, and the exact time checked. Treat APY as variable and not a forecast. Flag unusually high APY, low TVL, non-stable assets, smart-contract / bridge risk, and possible impermanent loss. Do not call a pool safe or promise a return.
-3. Exclude unsolicited DMs, referral spam, guaranteed-profit language, expired campaigns, and anything asking for a seed phrase, recovery phrase, private key, upfront fee, or transfer to unlock a reward.
-4. Do not connect a wallet, claim, trade, bridge, stake, deposit, approve a contract, sign a message, or send funds. Do not ask me for wallet secrets. Return research only and wait for my explicit review before any next step.
-
-Format the result as a concise table with: type, project, chain, current status, published/checked time (UTC), reward or APY, public eligibility, source URL, and risk flags. Put a short scam-safety checklist at the end. State clearly that rewards are not guaranteed and daily income is not promised.`;
-
 const VIEWS: { id: View; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "airdrops", label: "Airdrops", icon: Sparkles },
   { id: "giveaways", label: "Giveaways", icon: Gift },
   { id: "liquidity", label: "Liquidity pools", icon: Coins },
+  { id: "playbook", label: "Best setup", icon: Trophy },
+  { id: "earnings", label: "Earnings", icon: Wallet },
   { id: "saved", label: "Watchlist", icon: Bookmark },
-  { id: "agent", label: "Agent prompt", icon: Bot },
+  { id: "agent", label: "Agent prompts", icon: Bot },
 ];
 
 const VIEW_COPY: Record<View, { eyebrow: string; title: string; description: string }> = {
@@ -97,11 +96,23 @@ const VIEW_COPY: Record<View, { eyebrow: string; title: string; description: str
     description:
       "Saved on this device only. Use it to keep track of opportunities you still want to verify.",
   },
+  playbook: {
+    eyebrow: "Ranked strategy + setup",
+    title: "Best setup & earning methods",
+    description:
+      "The strongest legitimate path to real, withdrawable earnings — ranked methods, the foundation setup, and the exact path to your first withdrawal.",
+  },
+  earnings: {
+    eyebrow: "Earn → receive → withdraw",
+    title: "Earnings & withdrawals",
+    description:
+      "Log every reward from claim to bank. Only received and withdrawn amounts count as real earnings.",
+  },
   agent: {
     eyebrow: "Scheduled research brief",
-    title: "Your daily agent prompt",
+    title: "Your automation prompt pack",
     description:
-      "Copy this research-only brief into an agent with browsing and a scheduled-task feature.",
+      "Four research-only prompts that run the daily scan, vet every offer, review weekly earnings, and guide safe withdrawals.",
   },
 };
 
@@ -224,7 +235,7 @@ export function OpportunityRadar() {
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<"recent" | "apy" | "tvl">("recent");
   const [selected, setSelected] = useState<Opportunity | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
   const [hydrated, setHydrated] = useState(false);
   const yieldRequest = useRef(false);
@@ -368,12 +379,13 @@ export function OpportunityRadar() {
     });
   }
 
-  async function copyAgentPrompt() {
+  async function copyPrompt(promptId: string) {
+    const item = PROMPT_PACK.find((entry) => entry.id === promptId) ?? PROMPT_PACK[0];
     try {
-      await navigator.clipboard.writeText(AGENT_PROMPT);
-      setCopied(true);
-      setNotice("Daily agent prompt copied");
-      window.setTimeout(() => setCopied(false), 2200);
+      await navigator.clipboard.writeText(item.prompt);
+      setCopiedId(item.id);
+      setNotice(`${item.name} copied`);
+      window.setTimeout(() => setCopiedId(null), 2200);
     } catch {
       const textarea = document.querySelector<HTMLTextAreaElement>("#agent-prompt");
       textarea?.focus();
@@ -597,7 +609,26 @@ export function OpportunityRadar() {
               <p>{latestView.description}</p>
             </div>
             <div className="heading-actions">
-              {view !== "agent" ? (
+              {view === "playbook" || view === "earnings" || view === "agent" ? (
+                <button
+                  className="primary-button"
+                  type="button"
+                  onClick={() =>
+                    void copyPrompt(view === "earnings" ? "weekly-review" : "daily-scan")
+                  }
+                >
+                  {copiedId ? (
+                    <Check size={17} aria-hidden="true" />
+                  ) : (
+                    <Copy size={16} aria-hidden="true" />
+                  )}
+                  {copiedId
+                    ? "Copied"
+                    : view === "earnings"
+                      ? "Copy weekly review"
+                      : "Copy daily automation"}
+                </button>
+              ) : (
                 <button
                   className="primary-button"
                   type="button"
@@ -611,24 +642,11 @@ export function OpportunityRadar() {
                   )}
                   {scanning ? "Scanning…" : "Scan campaigns"}
                 </button>
-              ) : (
-                <button
-                  className="primary-button"
-                  type="button"
-                  onClick={() => void copyAgentPrompt()}
-                >
-                  {copied ? (
-                    <Check size={17} aria-hidden="true" />
-                  ) : (
-                    <Copy size={16} aria-hidden="true" />
-                  )}
-                  {copied ? "Copied" : "Copy agent prompt"}
-                </button>
               )}
-              {view !== "agent" ? (
-                <span className="scan-meta">Manual scan · source links required</span>
-              ) : (
+              {view === "playbook" || view === "earnings" || view === "agent" ? (
                 <span className="scan-meta">Research only · no transaction execution</span>
+              ) : (
+                <span className="scan-meta">Manual scan · source links required</span>
               )}
             </div>
           </section>
@@ -667,58 +685,68 @@ export function OpportunityRadar() {
             </div>
           ) : null}
 
-          <section className="stat-grid" aria-label="Opportunity summary">
-            <StatCard
-              icon={Activity}
-              label="Tracked signals"
-              value={counts.all.toString()}
-              footnote={
-                campaigns.length
-                  ? `${campaigns.length} campaign · ${pools.length} pool`
-                  : `${pools.length} live pool snapshot${pools.length === 1 ? "" : "s"}`
-              }
-              accent="mint"
-            />
-            <StatCard
-              icon={Sparkles}
-              label="Campaigns found"
-              value={campaigns.length.toString()}
-              footnote={scannedAt ? `Last scan ${timeAgo(scannedAt)}` : "Run a manual source scan"}
-              accent="lime"
-            />
-            <StatCard
-              icon={TrendingUp}
-              label="Liquidity snapshots"
-              value={pools.length.toString()}
-              footnote={
-                yieldFetchedAt
-                  ? `Updated ${timeAgo(yieldFetchedAt)}`
-                  : yieldState === "loading"
-                    ? "Checking public feed…"
-                    : "Feed not connected"
-              }
-              accent="blue"
-            />
-            <StatCard
-              icon={Bookmark}
-              label="Watchlist"
-              value={counts.saved.toString()}
-              footnote="Stored locally on this device"
-              accent="amber"
-            />
-          </section>
+          {view === "playbook" || view === "earnings" || view === "agent" ? null : (
+            <>
+              <section className="stat-grid" aria-label="Opportunity summary">
+                <StatCard
+                  icon={Activity}
+                  label="Tracked signals"
+                  value={counts.all.toString()}
+                  footnote={
+                    campaigns.length
+                      ? `${campaigns.length} campaign · ${pools.length} pool`
+                      : `${pools.length} live pool snapshot${pools.length === 1 ? "" : "s"}`
+                  }
+                  accent="mint"
+                />
+                <StatCard
+                  icon={Sparkles}
+                  label="Campaigns found"
+                  value={campaigns.length.toString()}
+                  footnote={
+                    scannedAt ? `Last scan ${timeAgo(scannedAt)}` : "Run a manual source scan"
+                  }
+                  accent="lime"
+                />
+                <StatCard
+                  icon={TrendingUp}
+                  label="Liquidity snapshots"
+                  value={pools.length.toString()}
+                  footnote={
+                    yieldFetchedAt
+                      ? `Updated ${timeAgo(yieldFetchedAt)}`
+                      : yieldState === "loading"
+                        ? "Checking public feed…"
+                        : "Feed not connected"
+                  }
+                  accent="blue"
+                />
+                <StatCard
+                  icon={Bookmark}
+                  label="Watchlist"
+                  value={counts.saved.toString()}
+                  footnote="Stored locally on this device"
+                  accent="amber"
+                />
+              </section>
 
-          <section className="safety-strip" aria-label="Safety note">
-            <ShieldAlert size={18} aria-hidden="true" />
-            <p>
-              <strong>No daily income is guaranteed.</strong> Airdrops may pay nothing; liquidity
-              can lose principal. Verify every source independently.
-            </p>
-            <span className="safety-strip-tag">Research only</span>
-          </section>
+              <section className="safety-strip" aria-label="Safety note">
+                <ShieldAlert size={18} aria-hidden="true" />
+                <p>
+                  <strong>No daily income is guaranteed.</strong> Airdrops may pay nothing;
+                  liquidity can lose principal. Verify every source independently.
+                </p>
+                <span className="safety-strip-tag">Research only</span>
+              </section>
+            </>
+          )}
 
-          {view === "agent" ? (
-            <AgentBrief copied={copied} onCopy={() => void copyAgentPrompt()} />
+          {view === "playbook" ? (
+            <PlaybookView onCopyPrompt={(id) => void copyPrompt(id)} />
+          ) : view === "earnings" ? (
+            <EarningsTracker />
+          ) : view === "agent" ? (
+            <PromptPackView copiedId={copiedId} onCopy={(id) => void copyPrompt(id)} />
           ) : (
             <section className="feed-section" aria-labelledby="feed-title">
               <div className="feed-heading-row">
@@ -1048,7 +1076,16 @@ function YieldCard({
   );
 }
 
-function AgentBrief({ copied, onCopy }: { copied: boolean; onCopy: () => void }) {
+function PromptPackView({
+  copiedId,
+  onCopy,
+}: {
+  copiedId: string | null;
+  onCopy: (promptId: string) => void;
+}) {
+  const [activeId, setActiveId] = useState(PROMPT_PACK[0].id);
+  const active = PROMPT_PACK.find((item) => item.id === activeId) ?? PROMPT_PACK[0];
+
   return (
     <section className="agent-brief-section">
       <div className="agent-intro-card">
@@ -1057,41 +1094,62 @@ function AgentBrief({ copied, onCopy }: { copied: boolean; onCopy: () => void })
         </div>
         <div>
           <span className="micro-label">AUTOMATION BLUEPRINT</span>
-          <h2>Let your own agent do the daily research</h2>
+          <h2>Four prompts that run the whole operation</h2>
           <p>
-            Copy the brief into an agent that supports web browsing and scheduled tasks. It asks for
-            evidence, excludes common wallet traps, and explicitly blocks transactions.
+            Copy each brief into an agent with web browsing and scheduled tasks. They ask for dated
+            evidence, exclude common wallet traps, and explicitly block transactions — automation
+            that researches for you, never one that moves your money.
           </p>
         </div>
+      </div>
+
+      <div className="prompt-pack-tabs" role="tablist" aria-label="Automation prompts">
+        {PROMPT_PACK.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            role="tab"
+            aria-selected={activeId === item.id}
+            className={`prompt-pack-tab ${activeId === item.id ? "is-active" : ""}`}
+            onClick={() => setActiveId(item.id)}
+          >
+            <strong>{item.name}</strong>
+            <span>{item.when}</span>
+          </button>
+        ))}
       </div>
 
       <div className="agent-layout-grid">
         <div className="prompt-panel">
           <div className="prompt-panel-header">
             <div>
-              <span className="section-kicker">DAILY RESEARCH PROMPT</span>
+              <span className="section-kicker">{active.when.toUpperCase()}</span>
               <span className="prompt-readonly">Ready to copy</span>
             </div>
-            <button className="secondary-button copy-prompt-button" type="button" onClick={onCopy}>
-              {copied ? (
+            <button
+              className="secondary-button copy-prompt-button"
+              type="button"
+              onClick={() => onCopy(active.id)}
+            >
+              {copiedId === active.id ? (
                 <Check size={16} aria-hidden="true" />
               ) : (
                 <Copy size={16} aria-hidden="true" />
               )}
-              {copied ? "Copied" : "Copy prompt"}
+              {copiedId === active.id ? "Copied" : "Copy prompt"}
             </button>
           </div>
           <textarea
             id="agent-prompt"
-            value={AGENT_PROMPT}
+            value={active.prompt}
             readOnly
             rows={18}
-            aria-label="Daily crypto research agent prompt"
+            aria-label={`Automation prompt: ${active.name}`}
           />
           <div className="prompt-footnote">
             <ShieldCheck size={14} aria-hidden="true" />
-            The prompt requests research only. Your agent still needs a browser/search tool and its
-            own schedule.
+            {active.summary} Your agent still needs a browser/search tool and its own schedule.
+            Nothing here can guarantee earnings.
           </div>
         </div>
 
@@ -1111,10 +1169,10 @@ function AgentBrief({ copied, onCopy }: { copied: boolean; onCopy: () => void })
             <li>
               <span>02</span>
               <div>
-                <strong>Set a daily time</strong>
+                <strong>Set the schedule</strong>
                 <p>
-                  Schedule one scan each morning in UTC. Keep campaign searches manual here to avoid
-                  repeated provider costs.
+                  Daily scan at 08:00 UTC, offer-vetting on demand, weekly review each Sunday,
+                  withdrawal brief every time you cash out.
                 </p>
               </div>
             </li>
@@ -1128,15 +1186,25 @@ function AgentBrief({ copied, onCopy }: { copied: boolean; onCopy: () => void })
                 </p>
               </div>
             </li>
+            <li>
+              <span>04</span>
+              <div>
+                <strong>Log results in the tracker</strong>
+                <p>
+                  Every payout gets an entry and moves pending → received → withdrawn. That log is
+                  what turns "opportunity" into real, withdrawable earnings.
+                </p>
+              </div>
+            </li>
           </ol>
           <div className="no-wallet-callout">
             <ShieldAlert size={16} aria-hidden="true" />
             <span>
               <strong>No wallet automation.</strong> Nothing here claims, signs, trades, bridges, or
-              deposits.
+              deposits — and no legitimate service can guarantee earnings.
             </span>
           </div>
-          <button className="text-button" type="button" onClick={onCopy}>
+          <button className="text-button" type="button" onClick={() => onCopy("daily-scan")}>
             Copy the daily brief <ArrowRight size={15} aria-hidden="true" />
           </button>
         </aside>
