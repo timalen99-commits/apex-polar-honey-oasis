@@ -7,9 +7,12 @@
  * `VITE_AUTH_ENABLED` — a divergence that only shows up as a built-output
  * mismatch long after the fact. Anything that starts Vite directly bypasses it.
  *
- * Only `VITE_`-prefixed keys are honored: the file is a build flag carrier, not
- * a secret store, and only `VITE_` vars reach the browser anyway. A real
- * `process.env` entry always wins, so an explicit override still works.
+ * Only `VITE_`-prefixed keys are honored from `.grok/app-env.json`: the file is
+ * a build flag carrier, not a secret store, and only `VITE_` vars reach the
+ * browser anyway. A real `process.env` entry always wins, so an explicit
+ * override still works. A standard dotenv `.env` at the workspace root is also
+ * merged (all keys, including server-only secrets such as `XAI_API_KEY`);
+ * non-VITE entries stay server-side because Vite never inlines them.
  *
  * That precedence also means the file governs this workspace only. A deployed
  * build runs with the provider's project env, where the deployer sets
@@ -55,6 +58,44 @@ export function parseAppEnv(text) {
 export function readAppEnv(root) {
   try {
     return parseAppEnv(readFileSync(join(root, APP_ENV_REL_PATH), "utf8"));
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Parse a dotenv-style `.env` document: `KEY=VALUE` lines, `#` comments, and
+ * optional single/double quotes around the value. Keys must look like shell
+ * identifiers. Unlike `parseAppEnv`, every key is kept — this is the standard
+ * dotenv surface (server secrets like `XAI_API_KEY` included); Vite only ships
+ * `VITE_`-prefixed values to the browser, so non-VITE entries stay server-side.
+ */
+export function parseDotEnv(text) {
+  const env = {};
+  for (const rawLine of String(text ?? "").split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) continue;
+    const cleaned = line.startsWith("export ") ? line.slice(7).trim() : line;
+    const eq = cleaned.indexOf("=");
+    if (eq <= 0) continue;
+    const key = cleaned.slice(0, eq).trim();
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) continue;
+    let value = cleaned.slice(eq + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"') && value.length >= 2) ||
+      (value.startsWith("'") && value.endsWith("'") && value.length >= 2)
+    ) {
+      value = value.slice(1, -1);
+    }
+    env[key] = value;
+  }
+  return env;
+}
+
+/** The `.env` recorded under `root`, or `{}` when the file is absent. */
+export function readDotEnv(root) {
+  try {
+    return parseDotEnv(readFileSync(join(root, ".env"), "utf8"));
   } catch {
     return {};
   }
@@ -110,7 +151,11 @@ function main(argv) {
     console.error("usage: node scripts/with-app-env.mjs <command> [args…]");
     process.exit(2);
   }
-  const env = mergeAppEnv(readAppEnv(projectRoot()), process.env);
+  // Precedence: real process env > `.grok/app-env.json` VITE flags > `.env`.
+  const env = mergeAppEnv(
+    readDotEnv(projectRoot()),
+    mergeAppEnv(readAppEnv(projectRoot()), process.env),
+  );
   const child = spawn(command, args, { stdio: "inherit", env });
   // The dev server is long-running and is stopped by signalling this wrapper.
   for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"]) {

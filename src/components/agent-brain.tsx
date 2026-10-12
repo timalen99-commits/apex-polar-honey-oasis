@@ -18,11 +18,13 @@ import {
 import {
   LLM_PROVIDER_ORDER,
   LLM_PROVIDERS,
+  brainEnvStatus,
   loadBrainConfig,
   saveBrainConfig,
   testBrainProvider,
   type BrainConfig,
   type LlmProvider,
+  type ServerKeyStatus,
 } from "@/lib/crypto/llm";
 import { awardXp, loadGoalsRolled, saveGoals } from "@/lib/crypto/goals";
 
@@ -34,7 +36,22 @@ export function AgentBrainView() {
   const [config, setConfig] = useState<BrainConfig>(() => loadBrainConfig());
   const [showKeys, setShowKeys] = useState<Partial<Record<LlmProvider, boolean>>>({});
   const [tests, setTests] = useState<Partial<Record<LlmProvider, TestState>>>({});
+  const [serverKeys, setServerKeys] = useState<ServerKeyStatus>({});
   const [toast, setToast] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    void brainEnvStatus()
+      .then((status) => {
+        if (!cancelled) setServerKeys(status);
+      })
+      .catch(() => {
+        // Server probe is best-effort; pasted keys still work without it.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!toast) return undefined;
@@ -60,7 +77,7 @@ export function AgentBrainView() {
   const runTest = useCallback(
     async (provider: LlmProvider) => {
       const cfg = config[provider];
-      if (!cfg.apiKey) {
+      if (!cfg.apiKey && !serverKeys[provider]) {
         setTests((prev) => ({
           ...prev,
           [provider]: { status: "fail", message: "Paste an API key first." },
@@ -96,11 +113,11 @@ export function AgentBrainView() {
         }));
       }
     },
-    [config],
+    [config, serverKeys],
   );
 
   const readyCount = LLM_PROVIDER_ORDER.filter(
-    (id) => config[id].enabled && config[id].apiKey,
+    (id) => config[id].enabled && (config[id].apiKey || serverKeys[id]),
   ).length;
 
   return (
@@ -182,6 +199,11 @@ export function AgentBrainView() {
                 <div>
                   <h3>{info.label}</h3>
                   <p className="provider-free-note">{info.freeNote}</p>
+                  {serverKeys[id] ? (
+                    <p className="provider-server-key">
+                      <Lock size={10} /> Server key active — works without pasting one here.
+                    </p>
+                  ) : null}
                 </div>
                 <label className="provider-toggle">
                   <input
@@ -263,13 +285,17 @@ export function AgentBrainView() {
                   {hasKey ? (
                     cfg.enabled ? (
                       <>
-                        <Check size={12} /> In the rotation stack.
+                        <Check size={12} /> Pasted key ready — overrides the server key.
                       </>
                     ) : (
                       <>
                         <X size={12} /> Disabled — skipped by the agent.
                       </>
                     )
+                  ) : serverKeys[id] ? (
+                    <>
+                      <Lock size={12} /> Server key ready — nothing to paste.
+                    </>
                   ) : (
                     <>
                       <KeyRound size={12} /> {info.keyHint}
@@ -285,9 +311,10 @@ export function AgentBrainView() {
       <div className="brain-footnotes">
         <p>
           <ShieldCheck size={13} /> <strong>How the stack works:</strong> the agent tries providers
-          in order — Gemini → Groq → OpenRouter → xAI. Hit a rate limit and it cools that provider
-          for 90 seconds and keeps going on the next brain. Keys live in this browser only (
-          <code>chainscout.brain.v1</code>) and are never included in exports or chat.
+          in order — Gemini → Groq → OpenRouter → xAI → OpenAI (free first, paid last to protect
+          balances). Hit a rate limit and it cools that provider for 90 seconds and keeps going on
+          the next brain. Keys live in this browser only (<code>chainscout.brain.v1</code>) or in
+          the server&apos;s <code>.env</code>, and are never included in exports or chat.
         </p>
         <p>
           <Sparkles size={13} /> <strong>About xAI keys:</strong> only console.x.ai can issue a key

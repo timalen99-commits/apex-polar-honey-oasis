@@ -4720,6 +4720,16 @@
   line-height: 1.55;
 }
 
+.provider-server-key {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 7px 0 0;
+  color: var(--color-mint) !important;
+  font-size: 8.5px !important;
+  font-weight: 650;
+}
+
 .provider-toggle {
   display: inline-flex;
   flex: 0 0 auto;

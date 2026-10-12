@@ -10,7 +10,7 @@ import { createServerFn } from "@tanstack/react-start";
  * logged, and never accepted through chat.
  */
 
-export type LlmProvider = "gemini" | "groq" | "openrouter" | "xai";
+export type LlmProvider = "gemini" | "groq" | "openrouter" | "xai" | "openai";
 
 export type LlmProviderInfo = {
   id: LlmProvider;
@@ -21,7 +21,16 @@ export type LlmProviderInfo = {
   freeNote: string;
 };
 
-export const LLM_PROVIDER_ORDER: LlmProvider[] = ["gemini", "groq", "openrouter", "xai"];
+export const LLM_PROVIDER_ORDER: LlmProvider[] = ["gemini", "groq", "openrouter", "xai", "openai"];
+
+/** Server-side env var that can carry each provider's key (see `.env`). */
+export const LLM_ENV_KEYS: Record<LlmProvider, string> = {
+  gemini: "GEMINI_API_KEY",
+  groq: "GROQ_API_KEY",
+  openrouter: "OPENROUTER_API_KEY",
+  xai: "XAI_API_KEY",
+  openai: "OPENAI_API_KEY",
+};
 
 export const LLM_PROVIDERS: Record<LlmProvider, LlmProviderInfo> = {
   gemini: {
@@ -57,6 +66,14 @@ export const LLM_PROVIDERS: Record<LlmProvider, LlmProviderInfo> = {
     freeNote:
       "No permanent free tier — new accounts may get ~$25 promo credits (a card may be required to activate). Optional.",
   },
+  openai: {
+    id: "openai",
+    label: "OpenAI",
+    keyUrl: "https://platform.openai.com/api-keys",
+    keyHint: "Platform → API keys",
+    defaultModel: "gpt-4o-mini",
+    freeNote: "Paid credits (no free tier) — kept last in the rotation to protect the balance.",
+  },
 };
 
 /* --------------------------- Browser-side key vault --------------------------- */
@@ -87,7 +104,12 @@ export function defaultBrainConfig(): BrainConfig {
     xai: {
       apiKey: "",
       model: LLM_PROVIDERS.xai.defaultModel,
-      enabled: false,
+      enabled: true,
+    },
+    openai: {
+      apiKey: "",
+      model: LLM_PROVIDERS.openai.defaultModel,
+      enabled: true,
     },
   };
 }
@@ -125,8 +147,12 @@ export function saveBrainConfig(config: BrainConfig): void {
   }
 }
 
-export function readyProviders(config: BrainConfig): LlmProvider[] {
-  return LLM_PROVIDER_ORDER.filter((id) => config[id].enabled && config[id].apiKey.length > 0);
+export type ServerKeyStatus = Partial<Record<LlmProvider, boolean>>;
+
+export function readyProviders(config: BrainConfig, serverKeys?: ServerKeyStatus): LlmProvider[] {
+  return LLM_PROVIDER_ORDER.filter(
+    (id) => config[id].enabled && (config[id].apiKey.length > 0 || serverKeys?.[id] === true),
+  );
 }
 
 /* ------------------------------ Error taxonomy ------------------------------ */
@@ -195,6 +221,17 @@ function extractOpenAiText(payload: unknown): string {
   return cleanText(message?.content, 8000);
 }
 
+/** Which providers have a server-side env key configured (booleans only — never the values). */
+export const brainEnvStatus = createServerFn({ method: "GET" }).handler(
+  async (): Promise<ServerKeyStatus> => {
+    const status: ServerKeyStatus = {};
+    for (const id of LLM_PROVIDER_ORDER) {
+      status[id] = Boolean((process.env[LLM_ENV_KEYS[id]] ?? "").trim());
+    }
+    return status;
+  },
+);
+
 export const askLlm = createServerFn({ method: "POST" })
   .validator((input: unknown): LlmRequest => {
     const data = (input ?? {}) as Partial<LlmRequest>;
@@ -203,7 +240,7 @@ export const askLlm = createServerFn({ method: "POST" })
       throw new Error("Unknown LLM provider.");
     }
     const apiKey = cleanText(data.apiKey, 300);
-    if (!apiKey) throw new Error("Missing API key for provider.");
+    // Empty key is allowed: the handler falls back to the server-side env key.
     return {
       provider,
       apiKey,
@@ -215,6 +252,15 @@ export const askLlm = createServerFn({ method: "POST" })
   })
   .handler(async (ctx): Promise<LlmResult> => {
     const req = ctx.data;
+    const apiKey = req.apiKey || (process.env[LLM_ENV_KEYS[req.provider]] ?? "").trim();
+    if (!apiKey) {
+      return {
+        ok: false,
+        provider: req.provider,
+        code: "auth",
+        error: `No API key for ${LLM_PROVIDERS[req.provider].label} — paste one in Agent Brain or set ${LLM_ENV_KEYS[req.provider]} on the server.`,
+      };
+    }
     const timeout = AbortSignal.timeout(45_000);
     try {
       let response: Response;
@@ -227,7 +273,7 @@ export const askLlm = createServerFn({ method: "POST" })
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "x-goog-api-key": req.apiKey,
+              "x-goog-api-key": apiKey,
             },
             signal: timeout,
             body: JSON.stringify({
@@ -329,9 +375,9 @@ export type BrainPrompt = {
 /** In-memory cooldowns so a rate-limited provider is skipped for a while. */
 const cooldownUntil = new Map<LlmProvider, number>();
 
-export function providerOrder(config: BrainConfig): LlmProvider[] {
+export function providerOrder(config: BrainConfig, serverKeys?: ServerKeyStatus): LlmProvider[] {
   const now = Date.now();
-  const ready = readyProviders(config);
+  const ready = readyProviders(config, serverKeys);
   const hot = ready.filter((id) => (cooldownUntil.get(id) ?? 0) <= now);
   const cooling = ready.filter((id) => (cooldownUntil.get(id) ?? 0) > now);
   return [...hot, ...cooling];
@@ -355,9 +401,10 @@ export function noteProviderSuccess(provider: LlmProvider): void {
 export async function brainComplete(
   config: BrainConfig,
   input: BrainPrompt,
+  serverKeys?: ServerKeyStatus,
 ): Promise<BrainOutcome> {
   const attempts: BrainAttempt[] = [];
-  for (const provider of providerOrder(config)) {
+  for (const provider of providerOrder(config, serverKeys)) {
     const cfg = config[provider];
     const result = await askLlm({
       data: {

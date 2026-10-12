@@ -9,6 +9,7 @@ import {
   APP_ENV_REL_PATH,
   mergeAppEnv,
   parseAppEnv,
+  parseDotEnv,
   projectRoot,
   readAppEnv,
 } from "./with-app-env.mjs";
@@ -125,4 +126,41 @@ test("the CLI still runs when invoked through a symlinked path", async () => {
     PRINT_FLAG,
   ]);
   assert.equal(stdout, "false");
+});
+
+test("parseDotEnv keeps every key, including server secrets", () => {
+  const env = parseDotEnv(
+    [
+      "# comment",
+      "",
+      "XAI_API_KEY=xai-abc123",
+      "export GROQ_API_KEY=gsk_xyz",
+      'QUOTED="has spaces"',
+      "SINGLE='raw$value'",
+      "BROKEN LINE",
+      "=novalue",
+      "BAD KEY=1",
+      "EMPTY=",
+    ].join("\n"),
+  );
+  assert.deepEqual(env, {
+    XAI_API_KEY: "xai-abc123",
+    GROQ_API_KEY: "gsk_xyz",
+    QUOTED: "has spaces",
+    SINGLE: "raw$value",
+    EMPTY: "",
+  });
+});
+
+test("parseDotEnv tolerates CRLF, trailing comments lines and empty input", () => {
+  assert.deepEqual(parseDotEnv("A=1\r\nB=2\r\n"), { A: "1", B: "2" });
+  assert.deepEqual(parseDotEnv(""), {});
+  assert.deepEqual(parseDotEnv(undefined), {});
+});
+
+test("process env wins over .env when merged", () => {
+  const merged = mergeAppEnv(parseDotEnv("XAI_API_KEY=from-file"), {
+    XAI_API_KEY: "from-process",
+  });
+  assert.equal(merged.XAI_API_KEY, "from-process");
 });

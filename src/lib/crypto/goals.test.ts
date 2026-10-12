@@ -139,6 +139,7 @@ describe("brain provider stack", () => {
       groq: { apiKey: "q-key", model: "openai/gpt-oss-20b", enabled: false },
       openrouter: { apiKey: "", model: "x:free", enabled: true },
       xai: { apiKey: "xai-key", model: "grok-4.7", enabled: true },
+      openai: { apiKey: "", model: "gpt-4o-mini", enabled: true },
     };
     assert.deepEqual(readyProviders(config), ["gemini", "xai"]);
   });
@@ -150,5 +151,26 @@ describe("brain provider stack", () => {
     const ready = readyProviders(config);
     assert.ok(ready.indexOf("gemini") < ready.indexOf("xai"));
     assert.deepEqual(ready, ["gemini", "xai"]);
+  });
+
+  it("treats server-side env keys as ready even with no pasted key", () => {
+    const config = defaultBrainConfig();
+    config.xai = { apiKey: "", model: "grok-4.7", enabled: true };
+    config.openai = { apiKey: "", model: "gpt-4o-mini", enabled: true };
+    const ready = readyProviders(config, {
+      xai: true,
+      openai: true,
+      gemini: false,
+      groq: false,
+      openrouter: false,
+    });
+    assert.deepEqual(ready, ["xai", "openai"]);
+  });
+
+  it("skips disabled providers even when a server key exists", () => {
+    const config = defaultBrainConfig();
+    config.groq = { apiKey: "", model: "openai/gpt-oss-20b", enabled: false };
+    const ready = readyProviders(config, { groq: true });
+    assert.deepEqual(ready, []);
   });
 });
