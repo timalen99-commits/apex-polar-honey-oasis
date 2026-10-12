@@ -1,6 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Relay">
-  <rect width="32" height="32" rx="8" fill="#1a1612"/>
-  <path fill="#efe6d6" fill-rule="evenodd" d="M7.2 4.6h9.3c4.6 0 7.3 2.6 7.3 6.4 0 3.2-2.1 5.4-5 6.1l5.6 6.5h-5.6l-4.9-6.1h-1.2V23.6H7.2V4.6zm5.6 4v4.5h3.2c1.7 0 2.7-.9 2.7-2.25s-1-2.25-2.7-2.25h-3.2z"/>
-  <rect x="7.2" y="25.5" width="10.6" height="2.8" rx="1.4" fill="#9c1c1c"/>
-  <rect x="19" y="25.5" width="5.6" height="2.8" rx="1.4" fill="#8a6232"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" role="img" aria-label="ChainScout">
+  <rect width="40" height="40" rx="11" fill="#101718"/>
+  <circle cx="20" cy="20" r="12.5" fill="none" stroke="#40533a" stroke-width="1.5"/>
+  <circle cx="20" cy="20" r="7" fill="none" stroke="#c5ff78" stroke-width="1.5"/>
+  <path d="M20 20 29.6 10.4M20 20h10.5" fill="none" stroke="#77dfb9" stroke-linecap="round" stroke-width="1.8"/>
+  <circle cx="20" cy="20" r="2.2" fill="#c5ff78"/>
 </svg>
