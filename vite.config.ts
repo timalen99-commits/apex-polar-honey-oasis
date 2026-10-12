@@ -152,9 +152,12 @@ export default defineConfig(({ command, isPreview }) => ({
     strictPort: true,
   },
   preview: {
-    host: "127.0.0.1",
+    // 0.0.0.0 so sandbox/live-preview proxies can reach it; allowedHosts
+    // covers local QA plus Arena preview hosts (https://{port}-{id}.e2b.app).
+    host: "0.0.0.0",
     port: 8081,
     strictPort: true,
+    allowedHosts: ["localhost", "127.0.0.1", ".e2b.app"],
   },
   resolve: { tsconfigPaths: true },
   plugins: [
