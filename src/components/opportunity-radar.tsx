@@ -16,6 +16,7 @@ import {
   ExternalLink,
   Gift,
   LayoutDashboard,
+  Landmark,
   LoaderCircle,
   Pickaxe,
   Radar,
@@ -44,6 +45,7 @@ import { awardXp } from "@/lib/crypto/goals";
 import { AgentBrainView } from "@/components/agent-brain";
 import { DailyGoalView } from "@/components/daily-goal";
 import { GrindBoard } from "@/components/grind-board";
+import { WalletDesk } from "@/components/wallet-desk";
 import { EarningsTracker } from "@/components/earnings-tracker";
 import { EarningsEngine } from "@/components/earnings-engine";
 import { JobsBoard } from "@/components/jobs-board";
@@ -60,6 +62,7 @@ type View =
   | "playbook"
   | "earn"
   | "earnings"
+  | "wallet"
   | "saved"
   | "brain"
   | "agent";
@@ -89,6 +92,7 @@ const VIEWS: { id: View; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "playbook", label: "Best setup", icon: Trophy },
   { id: "earn", label: "Earn now", icon: Zap },
   { id: "earnings", label: "Earnings log", icon: Wallet },
+  { id: "wallet", label: "Wallet desk", icon: Landmark },
   { id: "saved", label: "Watchlist", icon: Bookmark },
   { id: "brain", label: "Agent brain", icon: Brain },
   { id: "agent", label: "Agent prompts", icon: Bot },
@@ -124,6 +128,12 @@ const VIEW_COPY: Record<View, { eyebrow: string; title: string; description: str
     title: "Agent brain",
     description:
       "Stack free Gemini, Groq, and OpenRouter keys so the agent can plan, draft, and grind 24/7. xAI Grok optional. Keys stay in this browser.",
+  },
+  wallet: {
+    eyebrow: "Connect · sign · transact with hard limits",
+    title: "Wallet desk",
+    description:
+      "Connect your own wallet. The agent prepares signatures, claims, transfers, and DeFi calls as approval cards — every one capped by your safety limits and confirmed in your wallet popup. Keys never leave your wallet.",
   },
   airdrops: {
     eyebrow: "Campaign discovery",
@@ -781,6 +791,7 @@ export function OpportunityRadar() {
           view === "quests" ||
           view === "grind" ||
           view === "brain" ||
+          view === "wallet" ||
           view === "agent" ? null : (
             <>
               {view === "overview" && awaitingJobs > 0 ? (
@@ -860,6 +871,8 @@ export function OpportunityRadar() {
             <DailyGoalView onNavigate={(target) => setView(target)} />
           ) : view === "grind" ? (
             <GrindBoard onOpenJobs={() => setView("jobs")} />
+          ) : view === "wallet" ? (
+            <WalletDesk />
           ) : view === "brain" ? (
             <AgentBrainView />
           ) : view === "jobs" ? (
