@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import {
   Activity,
+  AlarmClock,
   ArrowRight,
   ArrowUpRight,
   Bookmark,
@@ -46,6 +47,7 @@ import { AgentBrainView } from "@/components/agent-brain";
 import { DailyGoalView } from "@/components/daily-goal";
 import { GrindBoard } from "@/components/grind-board";
 import { WalletDesk } from "@/components/wallet-desk";
+import { AgentSchedule } from "@/components/agent-schedule";
 import { EarningsTracker } from "@/components/earnings-tracker";
 import { EarningsEngine } from "@/components/earnings-engine";
 import { JobsBoard } from "@/components/jobs-board";
@@ -65,6 +67,7 @@ type View =
   | "wallet"
   | "saved"
   | "brain"
+  | "schedule"
   | "agent";
 type YieldState = "loading" | "ready" | "error";
 type Opportunity =
@@ -95,6 +98,7 @@ const VIEWS: { id: View; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "wallet", label: "Wallet desk", icon: Landmark },
   { id: "saved", label: "Watchlist", icon: Bookmark },
   { id: "brain", label: "Agent brain", icon: Brain },
+  { id: "schedule", label: "24/7 agent", icon: AlarmClock },
   { id: "agent", label: "Agent prompts", icon: Bot },
 ];
 
@@ -134,6 +138,12 @@ const VIEW_COPY: Record<View, { eyebrow: string; title: string; description: str
     title: "Wallet desk",
     description:
       "Connect your own wallet. The agent prepares signatures, claims, transfers, and DeFi calls as approval cards — every one capped by your safety limits and confirmed in your wallet popup. Keys never leave your wallet.",
+  },
+  schedule: {
+    eyebrow: "Always-on grind · payout rails",
+    title: "24/7 agent",
+    description:
+      "The loop that hunts, drafts, plans, and checks you in while the app is open — every run logged in the open. Plus payout-rail tracking: earned → received → withdrawn, with real fee and KYC notes.",
   },
   airdrops: {
     eyebrow: "Campaign discovery",
@@ -792,6 +802,7 @@ export function OpportunityRadar() {
           view === "grind" ||
           view === "brain" ||
           view === "wallet" ||
+          view === "schedule" ||
           view === "agent" ? null : (
             <>
               {view === "overview" && awaitingJobs > 0 ? (
@@ -873,6 +884,8 @@ export function OpportunityRadar() {
             <GrindBoard onOpenJobs={() => setView("jobs")} />
           ) : view === "wallet" ? (
             <WalletDesk />
+          ) : view === "schedule" ? (
+            <AgentSchedule onOpenEarnings={() => setView("earnings")} />
           ) : view === "brain" ? (
             <AgentBrainView />
           ) : view === "jobs" ? (

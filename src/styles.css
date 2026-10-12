@@ -5682,3 +5682,291 @@
     font-size: 8.5px;
   }
 }
+
+/* ============================= 24/7 agent schedule ============================= */
+
+.schedule-section {
+  padding-bottom: 14px;
+}
+
+.schedule-hero {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  margin-bottom: 13px;
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: linear-gradient(135deg, #f4faea, #ffffff 65%);
+  box-shadow: 0 12px 28px rgba(60, 84, 52, 0.06);
+}
+
+.schedule-hero-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.schedule-hero-copy h2 {
+  margin: 8px 0 8px;
+  color: var(--color-foreground);
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 620;
+  letter-spacing: -0.035em;
+}
+
+.schedule-hero-copy > p {
+  max-width: 720px;
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 10.5px;
+  line-height: 1.65;
+}
+
+.schedule-hero-copy > p strong {
+  color: var(--color-primary);
+}
+
+.schedule-hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 13px;
+}
+
+.schedule-controls {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.schedule-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.85fr) minmax(0, 1.35fr);
+  align-items: start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.schedule-cadence,
+.schedule-due {
+  min-width: 0;
+  padding: 17px;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: var(--color-surface);
+  box-shadow: 0 12px 28px rgba(60, 84, 52, 0.06);
+}
+
+.schedule-cadence h2,
+.schedule-due h2 {
+  margin: 9px 0 13px;
+  color: var(--color-foreground);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 610;
+  letter-spacing: -0.025em;
+}
+
+.schedule-toggle {
+  margin: 12px 0;
+}
+
+.schedule-due-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.schedule-due-card {
+  display: grid;
+  gap: 5px;
+  padding: 13px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 15px;
+  background: #f8faf5;
+  color: var(--color-primary);
+  text-align: left;
+  transition:
+    border-color 150ms ease,
+    transform 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.schedule-due-card:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: #c3d8ad;
+  box-shadow: 0 12px 26px rgba(74, 112, 48, 0.1);
+}
+
+.schedule-due-card:disabled {
+  opacity: 0.6;
+}
+
+.schedule-due-card strong {
+  color: var(--color-foreground);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.schedule-due-card > span {
+  color: var(--color-subtle);
+  font-size: 8.5px;
+}
+
+.schedule-log {
+  margin-bottom: 18px;
+  padding: 17px;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: var(--color-surface);
+  box-shadow: 0 12px 28px rgba(60, 84, 52, 0.06);
+}
+
+.schedule-log h2 {
+  margin: 9px 0 13px;
+  color: var(--color-foreground);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 610;
+  letter-spacing: -0.025em;
+}
+
+/* ============================= Payout rails ============================= */
+
+.payouts-section {
+  margin-bottom: 14px;
+  padding: 17px;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: var(--color-surface);
+  box-shadow: 0 12px 28px rgba(60, 84, 52, 0.06);
+}
+
+.payouts-section > h2 {
+  margin: 9px 0 8px;
+  color: var(--color-foreground);
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 610;
+  letter-spacing: -0.03em;
+}
+
+.payouts-intro {
+  max-width: 720px;
+  margin: 0 0 12px;
+  color: var(--color-muted);
+  font-size: 9.5px;
+  line-height: 1.65;
+}
+
+.payout-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.payout-card {
+  min-width: 0;
+  padding: 14px 15px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: #f8faf5;
+}
+
+.payout-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.payout-head h3 {
+  margin: 0;
+  color: var(--color-foreground);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 640;
+  letter-spacing: -0.02em;
+}
+
+.payout-summary {
+  margin: 0 0 9px;
+  color: var(--color-muted);
+  font-size: 8.5px;
+  line-height: 1.6;
+}
+
+.payout-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid #e6ecdb;
+  color: var(--color-subtle);
+  font-size: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================= Schedule responsive ============================= */
+
+@media (max-width: 1120px) {
+  .schedule-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-hero {
+    flex-wrap: wrap;
+  }
+
+  .schedule-controls {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .payout-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .schedule-hero {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 11px;
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .schedule-controls {
+    grid-column: 1 / -1;
+    flex-direction: column;
+  }
+
+  .schedule-controls > * {
+    width: 100%;
+  }
+
+  .schedule-hero-copy h2 {
+    font-size: 18px;
+  }
+
+  .schedule-cadence,
+  .schedule-due,
+  .schedule-log,
+  .payouts-section {
+    padding: 13px;
+    border-radius: 16px;
+  }
+
+  .schedule-due-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .payout-grid {
+    grid-template-columns: 1fr;
+  }
+}
