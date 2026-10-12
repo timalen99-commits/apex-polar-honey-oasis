@@ -11,42 +11,19 @@ import {
   Wallet,
   X,
 } from "lucide-react";
-
-type EntryStatus = "pending" | "received" | "withdrawn";
-type EntryMethod = "airdrop" | "points" | "liquidity" | "staking" | "yield" | "bounty" | "other";
-
-type EarningEntry = {
-  id: string;
-  date: string;
-  source: string;
-  method: EntryMethod;
-  asset: string;
-  amountUsd: number;
-  status: EntryStatus;
-  withdrawalMethod: string;
-  note: string;
-};
+import {
+  loadEarningEntries,
+  METHOD_LABEL,
+  newEntryId,
+  STATUS_LABEL,
+  STATUS_ORDER,
+  writeEarningEntries,
+  type EarningEntry,
+  type EntryMethod,
+  type EntryStatus,
+} from "@/lib/crypto/earnings-store";
 
 type Filter = "all" | EntryStatus;
-
-const STORE = "chainscout.earnings.v1";
-const STATUS_ORDER: EntryStatus[] = ["pending", "received", "withdrawn"];
-
-const STATUS_LABEL: Record<EntryStatus, string> = {
-  pending: "Pending claim",
-  received: "Received",
-  withdrawn: "Withdrawn",
-};
-
-const METHOD_LABEL: Record<EntryMethod, string> = {
-  airdrop: "Airdrop",
-  points: "Points / testnet",
-  liquidity: "Liquidity",
-  staking: "Staking",
-  yield: "Yield interest",
-  bounty: "Bounty / work",
-  other: "Other",
-};
 
 function blankDraft(): EarningEntry {
   return {
@@ -60,51 +37,6 @@ function blankDraft(): EarningEntry {
     withdrawalMethod: "",
     note: "",
   };
-}
-
-function loadEntries(): EarningEntry[] {
-  try {
-    const raw = localStorage.getItem(STORE);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .slice(0, 200)
-      .map((item): EarningEntry | null => {
-        if (!item || typeof item !== "object") return null;
-        const entry = item as Partial<EarningEntry>;
-        const amount = Number(entry.amountUsd);
-        if (
-          typeof entry.id !== "string" ||
-          typeof entry.source !== "string" ||
-          !entry.source.trim() ||
-          !Number.isFinite(amount) ||
-          amount < 0 ||
-          (entry.status !== "pending" &&
-            entry.status !== "received" &&
-            entry.status !== "withdrawn")
-        ) {
-          return null;
-        }
-        return {
-          id: entry.id,
-          date: typeof entry.date === "string" && entry.date ? entry.date.slice(0, 10) : "",
-          source: entry.source.trim().slice(0, 120),
-          method: entry.method ?? "other",
-          asset: typeof entry.asset === "string" ? entry.asset.trim().slice(0, 24) : "",
-          amountUsd: Math.round(amount * 100) / 100,
-          status: entry.status,
-          withdrawalMethod:
-            typeof entry.withdrawalMethod === "string"
-              ? entry.withdrawalMethod.trim().slice(0, 80)
-              : "",
-          note: typeof entry.note === "string" ? entry.note.trim().slice(0, 240) : "",
-        };
-      })
-      .filter((item): item is EarningEntry => item !== null);
-  } catch {
-    return [];
-  }
 }
 
 function usd(value: number): string {
@@ -131,13 +63,13 @@ export function EarningsTracker() {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setEntries(loadEntries());
+    setEntries(loadEarningEntries());
     setHydrated(true);
   }, []);
 
   useEffect(() => {
     if (!hydrated) return;
-    localStorage.setItem(STORE, JSON.stringify(entries));
+    writeEarningEntries(entries);
   }, [entries, hydrated]);
 
   useEffect(() => {
@@ -189,11 +121,7 @@ export function EarningsTracker() {
     }
     const entry: EarningEntry = {
       ...draft,
-      id:
-        editingId ??
-        (crypto.randomUUID
-          ? crypto.randomUUID()
-          : `e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+      id: editingId ?? newEntryId(),
       source: source.slice(0, 120),
       asset: asset.slice(0, 24),
       amountUsd: Math.round(amount * 100) / 100,

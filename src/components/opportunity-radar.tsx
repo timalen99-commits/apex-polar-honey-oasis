@@ -26,6 +26,7 @@ import {
   Trophy,
   Wallet,
   X,
+  Zap,
 } from "lucide-react";
 import {
   getYieldSnapshot,
@@ -35,10 +36,19 @@ import {
 } from "@/lib/crypto/scanner";
 import { PROMPT_PACK } from "@/lib/crypto/playbook";
 import { EarningsTracker } from "@/components/earnings-tracker";
+import { EarningsEngine } from "@/components/earnings-engine";
 import { PlaybookView } from "@/components/playbook-view";
 
 type View =
-  "overview" | "airdrops" | "giveaways" | "liquidity" | "playbook" | "earnings" | "saved" | "agent";
+  | "overview"
+  | "airdrops"
+  | "giveaways"
+  | "liquidity"
+  | "playbook"
+  | "earn"
+  | "earnings"
+  | "saved"
+  | "agent";
 type YieldState = "loading" | "ready" | "error";
 type Opportunity =
   | { kind: "campaign"; key: string; item: CampaignOpportunity }
@@ -60,7 +70,8 @@ const VIEWS: { id: View; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "giveaways", label: "Giveaways", icon: Gift },
   { id: "liquidity", label: "Liquidity pools", icon: Coins },
   { id: "playbook", label: "Best setup", icon: Trophy },
-  { id: "earnings", label: "Earnings", icon: Wallet },
+  { id: "earn", label: "Earn now", icon: Zap },
+  { id: "earnings", label: "Earnings log", icon: Wallet },
   { id: "saved", label: "Watchlist", icon: Bookmark },
   { id: "agent", label: "Agent prompts", icon: Bot },
 ];
@@ -101,6 +112,12 @@ const VIEW_COPY: Record<View, { eyebrow: string; title: string; description: str
     title: "Best setup & earning methods",
     description:
       "The strongest legitimate path to real, withdrawable earnings — ranked methods, the foundation setup, and the exact path to your first withdrawal.",
+  },
+  earn: {
+    eyebrow: "Real-time money engine",
+    title: "Earn now",
+    description:
+      "Watch real yield tick up every second at live APYs — plus the micro-earning programs that pay a little something with zero capital.",
   },
   earnings: {
     eyebrow: "Earn → receive → withdraw",
@@ -609,7 +626,7 @@ export function OpportunityRadar() {
               <p>{latestView.description}</p>
             </div>
             <div className="heading-actions">
-              {view === "playbook" || view === "earnings" || view === "agent" ? (
+              {view === "playbook" || view === "earn" || view === "earnings" || view === "agent" ? (
                 <button
                   className="primary-button"
                   type="button"
@@ -643,7 +660,7 @@ export function OpportunityRadar() {
                   {scanning ? "Scanning…" : "Scan campaigns"}
                 </button>
               )}
-              {view === "playbook" || view === "earnings" || view === "agent" ? (
+              {view === "playbook" || view === "earn" || view === "earnings" || view === "agent" ? (
                 <span className="scan-meta">Research only · no transaction execution</span>
               ) : (
                 <span className="scan-meta">Manual scan · source links required</span>
@@ -685,7 +702,10 @@ export function OpportunityRadar() {
             </div>
           ) : null}
 
-          {view === "playbook" || view === "earnings" || view === "agent" ? null : (
+          {view === "playbook" ||
+          view === "earn" ||
+          view === "earnings" ||
+          view === "agent" ? null : (
             <>
               <section className="stat-grid" aria-label="Opportunity summary">
                 <StatCard
@@ -743,6 +763,8 @@ export function OpportunityRadar() {
 
           {view === "playbook" ? (
             <PlaybookView onCopyPrompt={(id) => void copyPrompt(id)} />
+          ) : view === "earn" ? (
+            <EarningsEngine pools={pools} />
           ) : view === "earnings" ? (
             <EarningsTracker />
           ) : view === "agent" ? (
