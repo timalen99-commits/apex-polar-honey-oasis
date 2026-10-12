@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { RelayDesk } from "@/components/relay-desk";
+import { OpportunityRadar } from "@/components/opportunity-radar";
 
 export const Route = createFileRoute("/")({
   component: Home,
 });
 
 function Home() {
-  return <RelayDesk />;
+  return <OpportunityRadar />;
 }
