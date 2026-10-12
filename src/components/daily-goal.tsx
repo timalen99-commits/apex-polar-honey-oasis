@@ -21,7 +21,7 @@ import {
 } from "@/lib/crypto/goals";
 import { LLM_PROVIDER_ORDER, loadBrainConfig, readyProviders } from "@/lib/crypto/llm";
 
-type Navigate = (view: "jobs" | "earnings" | "overview" | "brain") => void;
+type Navigate = (view: "jobs" | "earnings" | "overview" | "brain" | "grind") => void;
 
 function fmtUsd(value: number): string {
   return `$${value.toFixed(2)}`;

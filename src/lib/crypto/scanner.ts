@@ -383,3 +383,175 @@ Return ONLY JSON in this shape: {"note":"short summary","campaigns":[{"type":"ai
       campaignScanInFlight = false;
     }
   });
+
+/* --------------------------- Money-task hunt (grind) --------------------------- */
+
+export type HuntedTask = {
+  kind: string;
+  title: string;
+  project: string;
+  summary: string;
+  payUsdLow: number;
+  payUsdHigh: number;
+  minutes: number;
+  riskFlags: string[];
+  requirements: string[];
+  sourceLabel: string;
+  sourceUrl: string;
+};
+
+export type MoneyTaskScanResult =
+  | { ok: true; tasks: HuntedTask[]; scannedAt: string; note: string }
+  | { ok: false; code: "not-configured" | "cooldown" | "unavailable"; error: string };
+
+let moneyTaskScanInFlight = false;
+let lastMoneyTaskScan = 0;
+const MONEY_TASK_COOLDOWN_MS = 2 * 60 * 1000;
+
+const HUNT_KINDS = ["freelance", "crypto", "microtask", "content", "product"];
+const HUNT_RISKS = ["tos-risk", "ban-risk", "geo-check", "unverified-pay", "points-only"];
+
+function huntText(value: unknown, max: number): string {
+  return typeof value === "string" ? value.trim().slice(0, max) : "";
+}
+
+function parseMoneyTasks(raw: string): { tasks: HuntedTask[]; note: string } {
+  const start = raw.indexOf("{");
+  const end = raw.lastIndexOf("}");
+  if (start < 0 || end <= start) return { tasks: [], note: "" };
+  let parsed: { note?: unknown; tasks?: unknown };
+  try {
+    parsed = JSON.parse(raw.slice(start, end + 1)) as { note?: unknown; tasks?: unknown };
+  } catch {
+    return { tasks: [], note: "" };
+  }
+  const list = Array.isArray(parsed.tasks) ? parsed.tasks : [];
+  const tasks: HuntedTask[] = [];
+  for (const item of list.slice(0, 8)) {
+    const t = (item ?? {}) as Record<string, unknown>;
+    const title = huntText(t.title, 120);
+    if (!title) continue;
+    const low = Number(t.payUsdLow);
+    const high = Number(t.payUsdHigh);
+    const payLow = Number.isFinite(low) && low >= 0 ? low : 0;
+    const payHigh = Number.isFinite(high) && high >= payLow ? high : payLow;
+    const minutesRaw = Number(t.minutes);
+    const risks = Array.isArray(t.riskFlags)
+      ? t.riskFlags.map((r) => huntText(r, 24)).filter((r) => HUNT_RISKS.includes(r))
+      : [];
+    if (!risks.includes("unverified-pay")) risks.push("unverified-pay");
+    const kindRaw = huntText(t.kind, 16);
+    tasks.push({
+      kind: HUNT_KINDS.includes(kindRaw) ? kindRaw : "microtask",
+      title,
+      project: huntText(t.project, 80) || "Web result",
+      summary: huntText(t.summary, 220),
+      payUsdLow: payLow,
+      payUsdHigh: payHigh,
+      minutes:
+        Number.isFinite(minutesRaw) && minutesRaw > 0 ? Math.min(Math.round(minutesRaw), 480) : 45,
+      riskFlags: risks,
+      requirements: Array.isArray(t.requirements)
+        ? t.requirements
+            .map((r) => huntText(r, 90))
+            .filter(Boolean)
+            .slice(0, 5)
+        : [],
+      sourceLabel: huntText(t.sourceLabel, 60) || "Web result",
+      sourceUrl: huntText(t.sourceUrl, 300),
+    });
+  }
+  return { tasks, note: huntText(parsed.note, 220) };
+}
+
+export const scanMoneyTasks = createServerFn({ method: "POST" })
+  .validator((input: unknown) => {
+    if (input && typeof input === "object") return {};
+    return {};
+  })
+  .handler(async (): Promise<MoneyTaskScanResult> => {
+    const apiKey = process.env.XAI_API_KEY;
+    if (!apiKey) {
+      return {
+        ok: false,
+        code: "not-configured",
+        error:
+          "Live task hunt is not connected in this environment. The starter catalog below still works, and no wallet actions were taken.",
+      };
+    }
+
+    const now = Date.now();
+    if (moneyTaskScanInFlight) {
+      return { ok: false, code: "cooldown", error: "A task hunt is already running." };
+    }
+    if (now - lastMoneyTaskScan < MONEY_TASK_COOLDOWN_MS) {
+      return {
+        ok: false,
+        code: "cooldown",
+        error: "Please wait two minutes before starting another live task hunt.",
+      };
+    }
+
+    moneyTaskScanInFlight = true;
+    lastMoneyTaskScan = now;
+    const scannedAt = new Date(now).toISOString();
+
+    try {
+      const response = await fetch("https://api.x.ai/v1/responses", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        signal: AbortSignal.timeout(50_000),
+        body: JSON.stringify({
+          model: "grok-4.7",
+          max_output_tokens: 2200,
+          input: [
+            {
+              role: "user",
+              content: `Current UTC time: ${scannedAt}.
+Search for currently open, genuinely payable small-work opportunities accessible to a solo freelancer in Lagos, Nigeria: freelance micro-gigs with public listings (small dev fixes, data cleanup, writing, video captions, game assets/mods), crypto project bounty or quest programs with active deadlines, user-testing and micro-task marketplaces, and small content gigs. Search at most twice. Exclude: gambling, forex/crypto trading signals, investment schemes, anything asking for an upfront payment, deposits, seed phrases, private keys, recruitment-fee offers, and guaranteed-income claims. Paid engagement gigs (likes/follows) may be included ONLY if clearly labeled. Pay figures must come from public listings; if unknown use 0 and mark unverified-pay. Return ONLY JSON in this shape: {"note":"one honest sentence about supply","tasks":[{"kind":"freelance|crypto|microtask|content|product","title":"","project":"","summary":"one concise factual sentence","payUsdLow":0,"payUsdHigh":0,"minutes":30,"riskFlags":["unverified-pay"],"requirements":[],"sourceLabel":"","sourceUrl":"https:// source page"}]}. Return at most 8 items. An empty tasks array is better than uncertain results.`,
+            },
+          ],
+          tools: [{ type: "x_search" }],
+        }),
+      });
+
+      if (!response.ok) {
+        const detail = (await response.text()).replace(/\s+/g, " ").slice(0, 160);
+        return {
+          ok: false,
+          code: "unavailable",
+          error: `Task hunt could not complete (${response.status}). ${detail}`,
+        };
+      }
+
+      const body: unknown = await response.json();
+      const { tasks, note } = parseMoneyTasks(extractText(body));
+      return {
+        ok: true,
+        tasks,
+        scannedAt,
+        note:
+          note ||
+          "Hunt finished. Check each source and pay figure before spending time — nothing here is a promised payout.",
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Task hunt could not complete.";
+      if (/abort|timeout/i.test(message)) {
+        return {
+          ok: false,
+          code: "unavailable",
+          error: "Task hunt took too long. Try again later.",
+        };
+      }
+      return {
+        ok: false,
+        code: "unavailable",
+        error: "Task hunt returned an unreadable response. Try again later.",
+      };
+    } finally {
+      moneyTaskScanInFlight = false;
+    }
+  });

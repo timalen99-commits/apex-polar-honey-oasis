@@ -241,7 +241,7 @@ export type Quest = {
   unit: "usd" | "count";
   xp: number;
   done: boolean;
-  action: { label: string; go: "jobs" | "earnings" | "overview" | "brain" };
+  action: { label: string; go: "jobs" | "earnings" | "overview" | "brain" | "grind" };
 };
 
 /** Daily quest list — progress is derived from real stores, not stored fictions. */
@@ -286,6 +286,16 @@ export function questList(state: GoalsState, day = todayKey()): Quest[] {
       unit: "count",
       xp: XP_VALUES["approve-job"],
       action: { label: "Open jobs", go: "jobs" },
+    },
+    {
+      id: "queue-two-tasks",
+      title: "Queue two tasks for the agent",
+      detail: "Approve leads on the Grind board (or add a task) — twice today.",
+      progress: Math.min(state.tasksQueuedToday, 2),
+      goal: 2,
+      unit: "count",
+      xp: 30,
+      action: { label: "Open grind board", go: "grind" },
     },
     {
       id: "finish-a-job",

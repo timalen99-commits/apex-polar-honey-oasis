@@ -17,6 +17,7 @@ import {
   Gift,
   LayoutDashboard,
   LoaderCircle,
+  Pickaxe,
   Radar,
   RefreshCw,
   Search,
@@ -42,6 +43,7 @@ import { appendJobsFromCampaigns, countAwaiting, loadJobs } from "@/lib/crypto/j
 import { awardXp } from "@/lib/crypto/goals";
 import { AgentBrainView } from "@/components/agent-brain";
 import { DailyGoalView } from "@/components/daily-goal";
+import { GrindBoard } from "@/components/grind-board";
 import { EarningsTracker } from "@/components/earnings-tracker";
 import { EarningsEngine } from "@/components/earnings-engine";
 import { JobsBoard } from "@/components/jobs-board";
@@ -50,6 +52,7 @@ import { PlaybookView } from "@/components/playbook-view";
 type View =
   | "overview"
   | "jobs"
+  | "grind"
   | "quests"
   | "airdrops"
   | "giveaways"
@@ -78,6 +81,7 @@ const REFRESH_INTERVAL_MS = 90_000;
 const VIEWS: { id: View; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "jobs", label: "Agent jobs", icon: Briefcase },
+  { id: "grind", label: "Grind board", icon: Pickaxe },
   { id: "quests", label: "Daily quests", icon: Target },
   { id: "airdrops", label: "Airdrops", icon: Sparkles },
   { id: "giveaways", label: "Giveaways", icon: Gift },
@@ -108,6 +112,12 @@ const VIEW_COPY: Record<View, { eyebrow: string; title: string; description: str
     title: "Daily quests",
     description:
       "Your worker game: a $40/day target ring, streaks, levels, and quests — all tracked from real logged earnings. XP is play; the payouts are real.",
+  },
+  grind: {
+    eyebrow: "Task feed · agent drafts, you approve",
+    title: "Grind board",
+    description:
+      "Freelance gigs, crypto bounties, micro-tasks, and content work — hunted and drafted by your agent, queued to approval cards. Risk flags up front; nothing auto-submits.",
   },
   brain: {
     eyebrow: "Free LLM stack",
@@ -769,6 +779,7 @@ export function OpportunityRadar() {
           view === "earn" ||
           view === "earnings" ||
           view === "quests" ||
+          view === "grind" ||
           view === "brain" ||
           view === "agent" ? null : (
             <>
@@ -847,6 +858,8 @@ export function OpportunityRadar() {
             <PlaybookView onCopyPrompt={(id) => void copyPrompt(id)} />
           ) : view === "quests" ? (
             <DailyGoalView onNavigate={(target) => setView(target)} />
+          ) : view === "grind" ? (
+            <GrindBoard onOpenJobs={() => setView("jobs")} />
           ) : view === "brain" ? (
             <AgentBrainView />
           ) : view === "jobs" ? (
