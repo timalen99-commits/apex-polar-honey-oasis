@@ -1,0 +1,38 @@
+{
+  "url": "http://127.0.0.1:8081/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Relay",
+      "hasCanvas": false,
+      "bodyTextLen": 3750,
+      "bodyTextHash": "0b10b4e6d0c9ab1f8e68b65c35e7c7d5b3ee05ea34100d06f789ff301aebb6b0",
+      "bodyTextPrefix": "WIRE DESK Relay Posts that mention Elon, from Catturd-style US p",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/prod-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Relay",
+      "hasCanvas": false,
+      "bodyTextLen": 3737,
+      "bodyTextHash": "220674c23587f7bf6fcfef5b92764982647303b4afc53adc0578150abab6746f",
+      "bodyTextPrefix": "WIRE DESK Relay Posts that mention Elon, from Catturd-style US p",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/prod-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/prod-preview.json",
+  "divergesFromBaseline": false,
+  "baselineReasons": []
+}
