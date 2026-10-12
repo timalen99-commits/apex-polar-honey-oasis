@@ -16,7 +16,8 @@ export const Route = createRootRoute({
         content:
           "A read-only crypto opportunity radar for public airdrop sources and live liquidity data.",
       },
-      { name: "theme-color", content: "#080d0e" },
+      { name: "theme-color", content: "#f2f4ee" },
+      { name: "color-scheme", content: "light" },
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },

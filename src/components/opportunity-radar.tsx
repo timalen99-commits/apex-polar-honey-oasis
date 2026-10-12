@@ -6,6 +6,7 @@ import {
   ArrowUpRight,
   Bookmark,
   Bot,
+  Briefcase,
   Check,
   CheckCircle2,
   Clock3,
@@ -35,12 +36,15 @@ import {
   type YieldPool,
 } from "@/lib/crypto/scanner";
 import { PROMPT_PACK } from "@/lib/crypto/playbook";
+import { appendJobsFromCampaigns, countAwaiting, loadJobs } from "@/lib/crypto/jobs";
 import { EarningsTracker } from "@/components/earnings-tracker";
 import { EarningsEngine } from "@/components/earnings-engine";
+import { JobsBoard } from "@/components/jobs-board";
 import { PlaybookView } from "@/components/playbook-view";
 
 type View =
   | "overview"
+  | "jobs"
   | "airdrops"
   | "giveaways"
   | "liquidity"
@@ -66,6 +70,7 @@ const REFRESH_INTERVAL_MS = 90_000;
 
 const VIEWS: { id: View; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "jobs", label: "Agent jobs", icon: Briefcase },
   { id: "airdrops", label: "Airdrops", icon: Sparkles },
   { id: "giveaways", label: "Giveaways", icon: Gift },
   { id: "liquidity", label: "Liquidity pools", icon: Coins },
@@ -78,10 +83,16 @@ const VIEWS: { id: View; label: string; icon: typeof LayoutDashboard }[] = [
 
 const VIEW_COPY: Record<View, { eyebrow: string; title: string; description: string }> = {
   overview: {
-    eyebrow: "Your daily research desk",
+    eyebrow: "Your friendly daily desk",
     title: "Opportunity radar",
     description:
-      "Find fresh campaign signals and compare live liquidity data, without connecting a wallet.",
+      "Fresh signals and live yields in one calm view. Your agent prepares the work — you approve every step.",
+  },
+  jobs: {
+    eyebrow: "Approve · then the agent works",
+    title: "Agent jobs",
+    description:
+      "Every crypto task the agent finds becomes a job card. It waits for your tap on the approval card — only then does the preparation work start.",
   },
   airdrops: {
     eyebrow: "Campaign discovery",
@@ -257,6 +268,15 @@ export function OpportunityRadar() {
   const [hydrated, setHydrated] = useState(false);
   const yieldRequest = useRef(false);
   const hasPools = useRef(false);
+  const [jobsVersion, setJobsVersion] = useState(0);
+  const [confirmJobId, setConfirmJobId] = useState<string | null>(null);
+
+  const awaitingJobs = useMemo(() => {
+    // jobsVersion bumps whenever the external jobs store mutates; read it so React recomputes.
+    void jobsVersion;
+    if (!hydrated) return 0;
+    return countAwaiting(loadJobs());
+  }, [hydrated, jobsVersion]);
 
   const refreshYields = useCallback(async (quiet = false) => {
     if (yieldRequest.current) return;
@@ -377,6 +397,25 @@ export function OpportunityRadar() {
       setScannedAt(result.scannedAt);
       setScanNote(result.note);
       setScanSuccess(result.note);
+      const createdJobs = appendJobsFromCampaigns(
+        result.campaigns.map((campaign) => ({
+          id: campaign.id,
+          project: campaign.project,
+          title: campaign.title,
+          kind: campaign.kind,
+          chain: campaign.chain,
+          reward: campaign.reward,
+          summary: campaign.summary,
+          sourceUrl: campaign.sourceUrl,
+        })),
+      );
+      if (createdJobs.length > 0) {
+        setJobsVersion((version) => version + 1);
+        setConfirmJobId(createdJobs[0].id);
+        setNotice(
+          `The agent found ${createdJobs.length} job${createdJobs.length === 1 ? "" : "s"} — approval card ready`,
+        );
+      }
       if (result.campaigns.length === 0)
         setNotice("No source-backed campaigns passed the freshness checks.");
     } catch {
@@ -540,15 +579,17 @@ export function OpportunityRadar() {
         <nav className="side-nav" aria-label="Main navigation">
           {VIEWS.map(({ id, label, icon: Icon }) => {
             const count =
-              id === "airdrops"
-                ? counts.airdrops
-                : id === "giveaways"
-                  ? counts.giveaways
-                  : id === "liquidity"
-                    ? counts.pools
-                    : id === "saved"
-                      ? counts.saved
-                      : null;
+              id === "jobs"
+                ? awaitingJobs
+                : id === "airdrops"
+                  ? counts.airdrops
+                  : id === "giveaways"
+                    ? counts.giveaways
+                    : id === "liquidity"
+                      ? counts.pools
+                      : id === "saved"
+                        ? counts.saved
+                        : null;
             return (
               <button
                 className={`nav-link ${view === id ? "is-active" : ""}`}
@@ -707,6 +748,23 @@ export function OpportunityRadar() {
           view === "earnings" ||
           view === "agent" ? null : (
             <>
+              {view === "overview" && awaitingJobs > 0 ? (
+                <button className="jobs-peek-card" type="button" onClick={() => setView("jobs")}>
+                  <span className="jobs-peek-icon" aria-hidden="true">
+                    <Briefcase size={18} />
+                  </span>
+                  <span className="jobs-peek-copy">
+                    <strong>
+                      Your agent has {awaitingJobs} job{awaitingJobs === 1 ? "" : "s"} waiting for
+                      your OK
+                    </strong>
+                    <span>Open the approval cards — work only starts when you tap approve.</span>
+                  </span>
+                  <span className="jobs-peek-cta">
+                    Review jobs <ArrowRight size={15} aria-hidden="true" />
+                  </span>
+                </button>
+              ) : null}
               <section className="stat-grid" aria-label="Opportunity summary">
                 <StatCard
                   icon={Activity}
@@ -763,6 +821,13 @@ export function OpportunityRadar() {
 
           {view === "playbook" ? (
             <PlaybookView onCopyPrompt={(id) => void copyPrompt(id)} />
+          ) : view === "jobs" ? (
+            <JobsBoard
+              confirmJobId={confirmJobId}
+              onConfirmConsumed={() => setConfirmJobId(null)}
+              reloadKey={jobsVersion}
+              onOpenEarnings={() => setView("earnings")}
+            />
           ) : view === "earn" ? (
             <EarningsEngine pools={pools} />
           ) : view === "earnings" ? (
