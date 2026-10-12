@@ -27,6 +27,7 @@ import {
   type AgentJob,
   type JobStatus,
 } from "@/lib/crypto/jobs";
+import { awardXp } from "@/lib/crypto/goals";
 
 type JobsBoardProps = {
   confirmJobId: string | null;
@@ -109,6 +110,7 @@ export function JobsBoard({
     setConfirmJob(null);
     updateJob(job.id, { status: "working", approvedAt: new Date().toISOString(), workNote: "" });
     refresh();
+    awardXp("approve-job");
     setWorkingJobId(job.id);
     setWorkPhase(0);
     for (const timer of workTimers.current) window.clearTimeout(timer);
@@ -125,7 +127,7 @@ export function JobsBoard({
         });
         setWorkingJobId(null);
         refresh();
-        setNotice("Job prepared — your checklist is ready");
+        setNotice("Job prepared — your checklist is ready (+25 XP)");
       }, 2800),
     ];
   }
@@ -144,7 +146,12 @@ export function JobsBoard({
   function markDone(job: AgentJob) {
     updateJob(job.id, { status: "done", finishedAt: new Date().toISOString() });
     refresh();
-    setNotice("Nice — marked completed");
+    const award = awardXp("finish-job");
+    setNotice(
+      award?.leveledUp
+        ? `Nice — marked completed! ${award.message}, Level ${award.level.level}: ${award.level.title}!`
+        : `Nice — marked completed (${award?.message ?? "good grind"})`,
+    );
   }
 
   function reopen(job: AgentJob) {
@@ -170,8 +177,9 @@ export function JobsBoard({
     setDraftReward("");
     setAdding(false);
     refresh();
+    const award = awardXp("add-task");
     setConfirmJob(job);
-    setNotice("Task added — approval card is up");
+    setNotice(`Task added — approval card is up (${award?.message ?? "nice"})`);
   }
 
   return (

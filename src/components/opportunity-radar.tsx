@@ -6,6 +6,7 @@ import {
   ArrowUpRight,
   Bookmark,
   Bot,
+  Brain,
   Briefcase,
   Check,
   CheckCircle2,
@@ -22,6 +23,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   Sparkles,
+  Target,
   TrendingUp,
   TriangleAlert,
   Trophy,
@@ -37,6 +39,9 @@ import {
 } from "@/lib/crypto/scanner";
 import { PROMPT_PACK } from "@/lib/crypto/playbook";
 import { appendJobsFromCampaigns, countAwaiting, loadJobs } from "@/lib/crypto/jobs";
+import { awardXp } from "@/lib/crypto/goals";
+import { AgentBrainView } from "@/components/agent-brain";
+import { DailyGoalView } from "@/components/daily-goal";
 import { EarningsTracker } from "@/components/earnings-tracker";
 import { EarningsEngine } from "@/components/earnings-engine";
 import { JobsBoard } from "@/components/jobs-board";
@@ -45,6 +50,7 @@ import { PlaybookView } from "@/components/playbook-view";
 type View =
   | "overview"
   | "jobs"
+  | "quests"
   | "airdrops"
   | "giveaways"
   | "liquidity"
@@ -52,6 +58,7 @@ type View =
   | "earn"
   | "earnings"
   | "saved"
+  | "brain"
   | "agent";
 type YieldState = "loading" | "ready" | "error";
 type Opportunity =
@@ -71,6 +78,7 @@ const REFRESH_INTERVAL_MS = 90_000;
 const VIEWS: { id: View; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "jobs", label: "Agent jobs", icon: Briefcase },
+  { id: "quests", label: "Daily quests", icon: Target },
   { id: "airdrops", label: "Airdrops", icon: Sparkles },
   { id: "giveaways", label: "Giveaways", icon: Gift },
   { id: "liquidity", label: "Liquidity pools", icon: Coins },
@@ -78,6 +86,7 @@ const VIEWS: { id: View; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "earn", label: "Earn now", icon: Zap },
   { id: "earnings", label: "Earnings log", icon: Wallet },
   { id: "saved", label: "Watchlist", icon: Bookmark },
+  { id: "brain", label: "Agent brain", icon: Brain },
   { id: "agent", label: "Agent prompts", icon: Bot },
 ];
 
@@ -93,6 +102,18 @@ const VIEW_COPY: Record<View, { eyebrow: string; title: string; description: str
     title: "Agent jobs",
     description:
       "Every crypto task the agent finds becomes a job card. It waits for your tap on the approval card — only then does the preparation work start.",
+  },
+  quests: {
+    eyebrow: "Daily grind · $40 target",
+    title: "Daily quests",
+    description:
+      "Your worker game: a $40/day target ring, streaks, levels, and quests — all tracked from real logged earnings. XP is play; the payouts are real.",
+  },
+  brain: {
+    eyebrow: "Free LLM stack",
+    title: "Agent brain",
+    description:
+      "Stack free Gemini, Groq, and OpenRouter keys so the agent can plan, draft, and grind 24/7. xAI Grok optional. Keys stay in this browser.",
   },
   airdrops: {
     eyebrow: "Campaign discovery",
@@ -397,6 +418,7 @@ export function OpportunityRadar() {
       setScannedAt(result.scannedAt);
       setScanNote(result.note);
       setScanSuccess(result.note);
+      awardXp("scan");
       const createdJobs = appendJobsFromCampaigns(
         result.campaigns.map((campaign) => ({
           id: campaign.id,
@@ -746,6 +768,8 @@ export function OpportunityRadar() {
           {view === "playbook" ||
           view === "earn" ||
           view === "earnings" ||
+          view === "quests" ||
+          view === "brain" ||
           view === "agent" ? null : (
             <>
               {view === "overview" && awaitingJobs > 0 ? (
@@ -821,6 +845,10 @@ export function OpportunityRadar() {
 
           {view === "playbook" ? (
             <PlaybookView onCopyPrompt={(id) => void copyPrompt(id)} />
+          ) : view === "quests" ? (
+            <DailyGoalView onNavigate={(target) => setView(target)} />
+          ) : view === "brain" ? (
+            <AgentBrainView />
           ) : view === "jobs" ? (
             <JobsBoard
               confirmJobId={confirmJobId}

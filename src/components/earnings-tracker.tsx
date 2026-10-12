@@ -22,6 +22,7 @@ import {
   type EntryMethod,
   type EntryStatus,
 } from "@/lib/crypto/earnings-store";
+import { awardXp } from "@/lib/crypto/goals";
 
 type Filter = "all" | EntryStatus;
 
@@ -134,7 +135,12 @@ export function EarningsTracker() {
       setNotice("Entry updated");
     } else {
       setEntries((current) => [entry, ...current]);
-      setNotice("Entry saved to your log");
+      const award = awardXp("log-earning");
+      setNotice(
+        award?.leveledUp
+          ? `Entry saved — ${award.message}, Level ${award.level.level}: ${award.level.title}!`
+          : `Entry saved to your log (${award?.message ?? "nice"})`,
+      );
     }
     setEditingId(null);
     setDraft(blankDraft());

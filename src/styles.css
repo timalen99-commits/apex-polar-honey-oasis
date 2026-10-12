@@ -4260,3 +4260,714 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ============================= Daily quests / goal ring ============================= */
+
+.quests-section {
+  padding-bottom: 14px;
+}
+
+.quests-hero {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 22px;
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: 22px;
+  background: linear-gradient(135deg, #eef7e2, #ffffff 70%);
+  box-shadow: 0 12px 28px rgba(60, 84, 52, 0.07);
+}
+
+.goal-ring {
+  position: relative;
+  flex: 0 0 200px;
+  width: 200px;
+  height: 200px;
+}
+
+.goal-ring svg {
+  display: block;
+  overflow: visible;
+}
+
+.goal-ring-track {
+  stroke: #e2ecd6;
+}
+
+.goal-ring-fill {
+  stroke: var(--color-primary);
+  filter: drop-shadow(0 6px 12px rgba(46, 158, 99, 0.25));
+  transition: stroke-dasharray 600ms ease;
+}
+
+.goal-ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  text-align: center;
+}
+
+.goal-ring-center strong {
+  color: var(--color-foreground);
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+}
+
+.goal-ring-center > span:last-child {
+  color: var(--color-muted);
+  font-size: 9.5px;
+}
+
+.quests-hero-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.quests-hero-copy h2 {
+  margin: 8px 0 8px;
+  color: var(--color-foreground);
+  font-family: var(--font-display);
+  font-size: 23px;
+  font-weight: 630;
+  letter-spacing: -0.035em;
+}
+
+.quests-hero-copy > p {
+  max-width: 640px;
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.quests-hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 13px 0;
+}
+
+.streak-chip,
+.level-chip,
+.quests-chip,
+.brain-chip {
+  display: inline-flex;
+  min-height: 27px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 11px;
+  border: 1px solid #d4e6c2;
+  border-radius: 999px;
+  background: #eef7e2;
+  color: var(--color-primary);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.streak-chip {
+  border-color: #ecd9ac;
+  background: #faf2dd;
+  color: var(--color-warning);
+}
+
+.level-chip {
+  border-color: #d4e6c2;
+  background: linear-gradient(120deg, #eaf4dc, #f7fbf1);
+}
+
+.brain-chip {
+  border-color: #dce4d2;
+  background: #f4f7ef;
+  color: var(--color-muted);
+}
+
+.brain-chip-live {
+  border-color: #c3e2cf;
+  background: #e9f7ee;
+  color: #26724c;
+}
+
+.quests-honesty {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 10px 12px;
+  border: 1px solid #ead8b2;
+  border-radius: 12px;
+  background: #fdf7ea;
+  color: #977b45;
+  font-size: 8.5px;
+  line-height: 1.6;
+}
+
+.quests-honesty svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--color-warning);
+}
+
+.quests-side-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quests-list-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 13px;
+}
+
+.quests-list-head h2 {
+  margin: 8px 0 0;
+  color: var(--color-foreground);
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.quest-list {
+  display: grid;
+  gap: 9px;
+}
+
+.quest-card {
+  min-width: 0;
+  padding: 15px 17px;
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: var(--color-surface);
+  box-shadow: 0 10px 24px rgba(60, 84, 52, 0.05);
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.quest-card:hover {
+  transform: translateY(-1px);
+  border-color: #cfe0bd;
+  box-shadow: 0 14px 30px rgba(60, 84, 52, 0.08);
+}
+
+.quest-card.quest-done {
+  border-color: #b9e0c2;
+  background: #f6fbf4;
+}
+
+.quest-top {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 11px;
+}
+
+.quest-check {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  place-items: center;
+  border: 1px solid #d4e6c2;
+  border-radius: 11px;
+  background: #eef7e2;
+  color: var(--color-primary);
+}
+
+.quest-done .quest-check {
+  border-color: #b9e0c2;
+  background: #def3e2;
+  color: #1f7a48;
+}
+
+.quest-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.quest-copy strong {
+  display: block;
+  color: var(--color-foreground);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.quest-copy p {
+  margin: 4px 0 0;
+  color: var(--color-muted);
+  font-size: 9.5px;
+  line-height: 1.55;
+}
+
+.quest-xp {
+  flex: 0 0 auto;
+  padding: 4px 9px;
+  border: 1px solid #d4e6c2;
+  border-radius: 999px;
+  background: #eef7e2;
+  color: var(--color-primary);
+  font-size: 8.5px;
+  font-weight: 750;
+}
+
+.quest-bottom {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-top: 11px;
+  padding-top: 10px;
+  border-top: 1px solid #ebeee2;
+}
+
+.quest-progress {
+  height: 7px;
+  min-width: 120px;
+  flex: 1;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e7eedd;
+}
+
+.quest-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-primary), #6cc48e);
+  transition: width 400ms ease;
+}
+
+.quest-done .quest-progress > span {
+  background: linear-gradient(90deg, #26724c, #58b17c);
+}
+
+.quest-figures {
+  flex: 0 0 auto;
+  color: var(--color-subtle);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.quest-complete-tag {
+  flex: 0 0 auto;
+  padding: 4px 10px;
+  border: 1px solid #b9e0c2;
+  border-radius: 999px;
+  background: #def3e2;
+  color: #1f7a48;
+  font-size: 8.5px;
+  font-weight: 750;
+}
+
+/* ============================= Agent brain ============================= */
+
+.brain-section {
+  padding-bottom: 14px;
+}
+
+.brain-hero {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  margin-bottom: 14px;
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: linear-gradient(135deg, #f4faea, #ffffff 65%);
+  box-shadow: 0 12px 28px rgba(60, 84, 52, 0.06);
+}
+
+.brain-hero-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.brain-hero-copy h2 {
+  margin: 8px 0 8px;
+  color: var(--color-foreground);
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 620;
+  letter-spacing: -0.035em;
+}
+
+.brain-hero-copy p {
+  max-width: 700px;
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 10.5px;
+  line-height: 1.65;
+}
+
+.brain-hero-copy p strong {
+  color: var(--color-primary);
+}
+
+.brain-hero-note {
+  margin-top: 8px !important;
+  color: var(--color-subtle) !important;
+  font-size: 9px !important;
+}
+
+.brain-ready-card {
+  display: grid;
+  flex: 0 0 190px;
+  gap: 5px;
+  padding: 14px 15px;
+  border: 1px solid #d4e6c2;
+  border-radius: 15px;
+  background: #f2f8e8;
+}
+
+.brain-ready-card strong {
+  color: var(--color-foreground);
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 630;
+}
+
+.brain-ready-card > span:last-child {
+  color: var(--color-muted);
+  font-size: 8.5px;
+  line-height: 1.5;
+}
+
+.brain-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin-bottom: 14px;
+}
+
+.brain-step {
+  display: flex;
+  gap: 11px;
+  padding: 13px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 15px;
+  background: var(--color-surface);
+  box-shadow: 0 10px 24px rgba(60, 84, 52, 0.05);
+}
+
+.brain-step strong {
+  display: block;
+  margin: 2px 0 4px;
+  color: var(--color-foreground);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.brain-step p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.provider-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 11px;
+  margin-bottom: 14px;
+}
+
+.provider-card {
+  min-width: 0;
+  padding: 16px 17px;
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: var(--color-surface);
+  box-shadow: 0 12px 28px rgba(60, 84, 52, 0.06);
+}
+
+.provider-optional {
+  border-style: dashed;
+  background: #fcfcf9;
+}
+
+.provider-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.provider-head h3 {
+  margin: 0 0 5px;
+  color: var(--color-foreground);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 640;
+  letter-spacing: -0.02em;
+}
+
+.provider-free-note {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 8.5px;
+  line-height: 1.55;
+}
+
+.provider-toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-muted);
+  font-size: 8.5px;
+  font-weight: 700;
+}
+
+.provider-toggle input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--color-primary);
+}
+
+.provider-key-row {
+  display: flex;
+  gap: 7px;
+  margin-bottom: 11px;
+}
+
+.provider-key-row input,
+.provider-model {
+  width: 100%;
+  height: 40px;
+  min-width: 0;
+  padding: 0 12px;
+  border: 1px solid #dfe7d4;
+  border-radius: 12px;
+  outline: none;
+  background: #f8faf5;
+  color: var(--color-foreground);
+  font-size: 10px;
+}
+
+.provider-key-row input:focus,
+.provider-model:focus {
+  border-color: #a9cd8c;
+  background: #ffffff;
+}
+
+.provider-key-row .icon-button {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+}
+
+.provider-card .field-label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.provider-model {
+  margin-bottom: 11px;
+}
+
+.provider-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.provider-actions .small-primary {
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 9.5px;
+}
+
+.provider-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-primary);
+  font-size: 9px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.provider-link:hover {
+  color: #1f7a48;
+  text-decoration: underline;
+}
+
+.provider-test {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 11px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid #ebeee2;
+  color: var(--color-subtle);
+  font-size: 8.5px;
+  line-height: 1.5;
+}
+
+.provider-test-ok {
+  color: var(--color-mint);
+}
+
+.provider-test-fail {
+  color: var(--color-warning);
+}
+
+.provider-test-testing {
+  color: var(--color-primary);
+}
+
+.brain-footnotes {
+  display: grid;
+  gap: 8px;
+}
+
+.brain-footnotes p {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 11px 13px;
+  border: 1px solid #e6ecdb;
+  border-radius: 13px;
+  background: #f7faf3;
+  color: var(--color-muted);
+  font-size: 9px;
+  line-height: 1.65;
+}
+
+.brain-footnotes p > svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--color-primary);
+}
+
+.brain-footnotes p strong {
+  color: var(--color-foreground);
+}
+
+.brain-footnotes code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: #e9efdf;
+  color: #4c6b3c;
+  font-size: 8.5px;
+}
+
+/* ============================= Quests / brain responsive ============================= */
+
+@media (max-width: 1120px) {
+  .quests-hero {
+    flex-wrap: wrap;
+  }
+
+  .quests-side-actions {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 900px) {
+  .provider-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .brain-steps {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .quests-hero {
+    display: grid;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 15px;
+    padding: 17px;
+    border-radius: 17px;
+  }
+
+  .quests-hero-copy {
+    text-align: center;
+  }
+
+  .quests-hero-copy h2 {
+    font-size: 19px;
+  }
+
+  .quests-hero-chips {
+    justify-content: center;
+  }
+
+  .quests-honesty {
+    text-align: left;
+  }
+
+  .quests-side-actions {
+    flex-direction: column;
+  }
+
+  .quests-side-actions > * {
+    width: 100%;
+  }
+
+  .quests-list-head {
+    display: block;
+  }
+
+  .quests-list-head .result-count {
+    display: inline-flex;
+    margin-top: 10px;
+  }
+
+  .quest-card {
+    padding: 13px;
+    border-radius: 15px;
+  }
+
+  .quest-bottom {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .quest-progress {
+    flex-basis: 100%;
+  }
+
+  .brain-hero {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 11px;
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .brain-ready-card {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .brain-hero-copy h2 {
+    font-size: 18px;
+  }
+
+  .provider-card {
+    border-radius: 16px;
+  }
+
+  .brain-footnotes p {
+    font-size: 8.5px;
+  }
+}
